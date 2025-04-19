@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLASK SSE</title>
+    <script src=" https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js "></script>
+    <style>
+        body{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <canvas id="myChart"></canvas>
+    </div>
+    
+    <script>
+        const ctx = document.getElementById('myChart');
+        const streamUrl = "{{url_for('sse.stream')}}";
+
+        const source = new EventSource(streamUrl)
+        
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data:{
+                labels: ["Purple","Orange"],
+                datasets: [
+                    {
+                        label: "Nº of votes",
+                        data: [0,0],
+                        backgroundColor:[
+                            "rgb(128,0,128)",
+                            "rgb(255,165,0)"
+                        ]
+                    }
+                ]
+            }
+        })
+
+        source.addEventListener('votes', function(event){
+            try {
+                const jsonData = JSON.parse(event.data);
+                chart.data.datasets[0].data = jsonData.votes;
+            } catch (error) {
+                console.log(error);
+                alert('Stream Error');
+                chart.data.datasets[0].data = [0,0];
+            } finally{
+                chart.update();
+            }
+        })
+        
+
+    </script>
+</body>
+</html>
